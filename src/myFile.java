@@ -15,7 +15,7 @@ public class myFile implements File {
     private long fileSize;
     private long blockSize;
     ArrayList<Map<Id,Id>> LogicBlockList;
-    ArrayList<Id> usingBlocks = new ArrayList<>();
+    ArrayList<Block> usingBlocks = new ArrayList<>();
     private FileManager fileManager;
     private Id fileId;
     private long cursor = 0;
@@ -39,14 +39,14 @@ public class myFile implements File {
         if(length < 0)
             throw new ErrorCode(ErrorCode.READ_LENGTH_ERROR);
         if(length == 0)
-            return null;
+            return "".getBytes();
         if(length > fileSize)
             length = (int)fileSize;
         if(cursor < 0 || (cursor >= fileSize && fileSize != 0) || (fileSize == 0 && cursor != 0))
             throw new ErrorCode(ErrorCode.CURSOR_ERROR);
 
         long indexBegin = cursor/blockSize;
-        long indexEnd = (cursor+length > fileSize)?fileSize/blockSize:(cursor+length)/blockSize;
+        long indexEnd = (cursor+length > fileSize)?fileSize/blockSize:(cursor+length)/blockSize ;
         byte[] retBytes = new byte[length];
         int retBytesIndex = 0;
 
@@ -84,7 +84,7 @@ public class myFile implements File {
         }
     };
     public void write(byte[] b){
-        if(cursor < 0 || (cursor >= fileSize && fileSize != 0) || (fileSize == 0 && cursor != 0))
+        if(cursor < 0 || (cursor > fileSize && fileSize != 0) || (fileSize == 0 && cursor != 0))
             throw new ErrorCode(ErrorCode.CURSOR_ERROR);
 
         int indexBegin = (int)(cursor/blockSize);
@@ -128,7 +128,7 @@ public class myFile implements File {
             }
             LogicBlockList.add(writeDuplication(newBytes));
         }else {
-            newBytes = new byte[(int)cursor + b.length];
+            newBytes = new byte[(int)(cursor%blockSize) + b.length];
             int i = 0;
             for(; i < cursor%blockSize;i++){//??????????????????????
                 newBytes[i] = oldBytes[i];
@@ -153,7 +153,7 @@ public class myFile implements File {
         //先newfilesize后再set filesize是为了一致性
         cursor += b.length;
 
-    };
+    }
 
     public long move(long offset, int where){
         switch (where){
@@ -168,21 +168,22 @@ public class myFile implements File {
                 break;
         }
         return 0;
-    };
+    }
     public void close(){/////////////////////我觉得不需要这个
-//        for(Id idObj:usingBlocks){
-//            int blkId = Integer.parseInt(((StringId)idObj).getId());
-//            int bufIndex = blkId %(Buffer.BUFFER_LINES);
-//            for(BufferBlk blk : Buffer.cache.get(bufIndex)){
-//                if(Integer.parseInt(blk.getBufBlkId().getId()) == blkId){
-//                    Buffer.makeFree(blk);
-//                }
-//            }
-//        }
-    };
+        for(Block block:usingBlocks){
+            int blkId = Integer.parseInt(((StringId) block.getIndexId()).getId());
+            BufferBlk bufferBlk = Buffer.findBufBlk(blkId);
+            if(bufferBlk.isDelay()){
+                //写回
+                Buffer.writeBlk2file(bufferBlk);
+                bufferBlk.setDelay(false);
+            }
+        }
+        usingBlocks.clear();
+    }
     public long size(){
         return fileSize;
-    };
+    }
     public void setSize(long newSize){/////////////////要加try
         if(newSize < 0)
             throw new ErrorCode(ErrorCode.NEWSIZE_ERROR);
@@ -209,15 +210,18 @@ public class myFile implements File {
                 newBlock[index] = oldBlockEnd[i];
                 index++;
             }
+            int debug = 0;
             for(;index < blockSize; index++){
                 newBlock[index] = 0x00;
                 if(index == newBlock.length - 1)
                     break;
             }
+            int debug2 = 0;
             LogicBlockList.add(writeDuplication(newBlock));
-            for(int i = oldBlockEndIndex+1; i < newBlockEndIndex - 1; i++){
+            for(int i = oldBlockEndIndex+1; i < newBlockEndIndex; i++){
                 LogicBlockList.add(writeDuplication(new byte[(int)blockSize]));
             }
+            int debug3 = 0;
             if(oldBlockEndIndex != newBlockEndIndex)
                 LogicBlockList.add(writeDuplication(new byte[(int)(newSize%blockSize)]));
 
@@ -248,12 +252,13 @@ public class myFile implements File {
             for(Map.Entry<Id,Id> entry : map.entrySet()){
                 if((entry.getKey()).equals(new StringId("FILE_EMPTY"))){ //处理文件空洞,newEmpytBlock不应该用在bm里因为文件空洞的时候是不存在block里的
                     blockData = new byte[(int)blockSize];
+                    break;
                 }else {
                     BlockManager blockManager = mContext.myBlockManagerMap.get(entry.getKey());
                     try {
                         Block block = blockManager.getBlock(entry.getValue());
                         blockData = block.read();
-                        usingBlocks.add(entry.getValue());
+//                        usingBlocks.add(entry.getValue());
                         break;
                     }catch (ErrorCode errorCode){
                         throw errorCode;
@@ -304,6 +309,7 @@ public class myFile implements File {
     private Block writeBlock(StringId id,byte[] b){
         BlockManager blockManager = mContext.myBlockManagerMap.get(id);
         Block newBlock = blockManager.newBlock(b);
+        usingBlocks.add(newBlock);
         return newBlock;
     }
     private void updateFileMeta(long newFileSize){

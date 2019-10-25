@@ -1,57 +1,79 @@
-import interfaces.BlockManager;
-import interfaces.File;
-import interfaces.FileManager;
-import interfaces.Id;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Scanner;
 
 public class test {
-    public static void main(String[] args){
-        ArrayList<Map<Id,Integer>> LogicBlockList = new ArrayList<>();
-        Map<Id,Integer> map = new HashMap<>();
-        map.put(new StringId("bm-01"),1);
-        map.put(new StringId("bm-02"),1);
-        LogicBlockList.add(map);
-//        System.out.println(map.toString());
-//        Map<Id,myFileManager> debug = mContext.myFileManagerMap;
-//        myFileManager myFileManager = debug.get(new StringId("fm-01"));
-////        myFileManager.getFile(new StringId("a"));
-//
-//        BlockManager blockManager1 = mContext.myBlockManagerMap.get("bm-01");
-//        BlockManager blockManager2 = new myBlockManager("./path/to/bm-02/");
-//        BlockManager blockManager3 = new myBlockManager("./path/to/bm-03/");
-//        byte[] a = "helloooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo".getBytes();
-//        byte[] b = "worldddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd".getBytes();
-////        blockManager1.newBlock(a);
-////        blockManager2.newBlock(a);
-////        blockManager1.newBlock(b);
-////        blockManager3.newBlock(b);
-//        File file = myFileManager.getFile(new StringId("a"));
-//        byte[] bytes = file.read(700);
-//        System.out.println(new String(bytes));
-        FileManager fm = mContext.myFileManagerMap.get(new StringId("fm-02"));
-//        File f = fm.getFile(new StringId("name"));
-//        byte[] w = "abcdefghijklmn".getBytes();
-//        f.write(w);
-//        f.write(w);
-//        byte[] bytes = f.read(15);
-//        System.out.println(new String(bytes)+"\n");
-//        byte[] bytes2 = f.read(5);
-//        System.out.println(new String(bytes2));
-        ArrayList<ArrayList<BufferBlk>> arrayLists = Buffer.cache;
-        int debug = 0;
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("supported commands:cat,hex,write,copy,create,setsize,q:");
+        while (true){
+            System.out.println("$");
+            String command = scanner.nextLine();
+            String op = command.split(" ")[0];
+            String[] commandArr;
+            try{
+                switch (op){
+                    case "cat":
+                        commandArr = command.split(" ",3);
+                        if(commandArr.length == 3 && isFm(commandArr[1]))
+                            alphaUtil.alphaCat(commandArr[1],commandArr[2]);
+                        else
+                            throw new ErrorCode(ErrorCode.COMMAND_PARAMETER_ERROE);
+                        break;
+                    case "hex":
+                        commandArr = command.split(" ",3);
+                        if(commandArr.length == 3 && isNumber(commandArr[2]) && isBm(commandArr[1]))
+                            alphaUtil.alphaHex(commandArr[1],Integer.parseInt(commandArr[2]));
+                        else
+                            throw new ErrorCode(ErrorCode.COMMAND_PARAMETER_ERROE);
+                        break;
+                    case "write":
+                        commandArr = command.split(" ",4);
+                        if(commandArr.length == 4 && isNumber(commandArr[1]))
+                            alphaUtil.alphaWrite(Integer.parseInt(commandArr[1]),commandArr[2],commandArr[3]);
+                        else
+                            throw new ErrorCode(ErrorCode.COMMAND_PARAMETER_ERROE);
+                        break;
+                    case "copy":
+                        commandArr = command.split(" ",5);
+                        if(commandArr.length == 5 && isFm(commandArr[1]) && isFm(commandArr[3]))
+                            alphaUtil.alphaCopy(commandArr[1],commandArr[2],commandArr[3],commandArr[4]);
+                        else
+                            throw new ErrorCode(ErrorCode.COMMAND_PARAMETER_ERROE);
+                        break;
+                    case "q":
+                        alphaUtil.finish();
+                        System.exit(0);
+                        break;
+                    case "create":
+                        commandArr = command.split(" ",3);
+                        if(commandArr.length == 3)
+                            alphaUtil.alphaCreate(commandArr[1],commandArr[2]);
+                        else
+                            throw new ErrorCode(ErrorCode.COMMAND_PARAMETER_ERROE);
+                        break;
+                    case "setsize":
+                        commandArr = command.split(" ",2);
+                        if(commandArr.length == 2 && isNumber(commandArr[1]))
+                            alphaUtil.alphaSetSize(Integer.parseInt(commandArr[1]));
+                        else
+                            throw new ErrorCode(ErrorCode.COMMAND_PARAMETER_ERROE);
+                        break;
+                    default:
+                        throw new ErrorCode(ErrorCode.INVALID_COMMAND);
+                }
+            }catch (ErrorCode errorCode){
+                System.out.println(errorCode.getErrorText(errorCode.getErrorCode()));
+            }
 
-        byte[] w2 = "aooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooa$$".getBytes();
-        byte[] zero = new byte[514];
-        File f2 = fm.getFile(new StringId("2_blks"));
-
-        f2.write(w2);
-        f2.move(0,File.MOVE_HEAD);
-        f2.setSize(20);
-        f2.setSize(511);
-        f2.move(500,File.MOVE_HEAD);
-        System.out.println(new String(f2.read(5)));
+        }
+    }
+    private static boolean isNumber(String str){
+        String reg = "^[0-9]+(.[0-9]+)?$";
+        return str.matches(reg);
+    }
+    private static boolean isFm(String str){
+        return mContext.myFileManagerMap.containsKey(new StringId(str));
+    }
+    private static boolean isBm(String str){
+        return mContext.myBlockManagerMap.containsKey(new StringId(str));
     }
 }

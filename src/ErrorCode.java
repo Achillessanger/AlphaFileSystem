@@ -15,6 +15,10 @@ public class ErrorCode extends RuntimeException {
     public static final int CURSOR_ERROR = 11;
     public static final int OPEN_TOO_MANY_FILES = 12;
     public static final int NEWSIZE_ERROR = 13;
+    public static final int NO_OPERATING_FILE = 14;
+    public static final int COMMAND_PARAMETER_ERROE = 15;
+    public static final int NO_THIS_CURSOR_TYPE = 16;
+    public static final int INVALID_COMMAND = 17;
     private static final Map<Integer,String> ErrorCodeMap = new HashMap<>();
     static {
         ErrorCodeMap.put(IO_EXCEPTION,"IO exception");
@@ -30,6 +34,10 @@ public class ErrorCode extends RuntimeException {
         ErrorCodeMap.put(CURSOR_ERROR,"file cursor error");
         ErrorCodeMap.put(OPEN_TOO_MANY_FILES,"open too many files,close some");
         ErrorCodeMap.put(NEWSIZE_ERROR,"invalid newsize");
+        ErrorCodeMap.put(NO_OPERATING_FILE,"you should cat one file first");
+        ErrorCodeMap.put(COMMAND_PARAMETER_ERROE,"invalid parameter(s)");
+        ErrorCodeMap.put(NO_THIS_CURSOR_TYPE,"invalid cursor move strategy(cur,head,tail)");
+        ErrorCodeMap.put(INVALID_COMMAND,"invalid command(cat,hex,write,copy,q)");
     }
 
     public static String getErrorText(int errorCode){

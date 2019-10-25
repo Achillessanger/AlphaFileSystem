@@ -6,6 +6,7 @@ import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class myBlock implements Block {
     private Id indexId;
@@ -30,10 +31,14 @@ public class myBlock implements Block {
         int blkId = Integer.parseInt(((StringId)indexId).getId());
         int bufIndex =blkId %(Buffer.BUFFER_LINES);
         //在cache里找
+
+        ArrayList<ArrayList<BufferBlk>> debug = Buffer.cache;
+
         for(int i = 0; i < Buffer.cache.get(bufIndex).size(); i++){
             //！注意这里没有讨论块忙的情况!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             if(Integer.parseInt(Buffer.cache.get(bufIndex).get(i).getBufBlkId().getId()) == blkId
-                && !Buffer.cache.get(bufIndex).get(i).isBusy()){
+                && !Buffer.cache.get(bufIndex).get(i).isBusy()
+                && Buffer.cache.get(bufIndex).get(i).getBufBlkManager().equals(blockManager.getName())){
 //                Buffer.cache.get(bufIndex).get(i).setBusy(true);
                 return Buffer.cache.get(bufIndex).get(i).getData();
             }
@@ -46,6 +51,8 @@ public class myBlock implements Block {
             throw new ErrorCode(ErrorCode.OPEN_TOO_MANY_FILES);
 
         }else {
+            Buffer.delayWrite();
+
             //找到新的缓冲区tmp
             //把tmp从空闲缓冲区链表取下
 //            BufferBlk tmpPre = tmpBlk.getPreFreeBufBlk();
@@ -94,11 +101,13 @@ public class myBlock implements Block {
             if(check) {
                 newBlk.setData(data);
                 newBlk.setBufBlkId((StringId)indexId);
+                newBlk.setBufBlkManager((StringId) blockManager.getName());
                 Buffer.makeFree(newBlk);
                 return data;
-            } else
+            } else {
                 Buffer.makeFree(newBlk);
                 throw new ErrorCode(ErrorCode.CHECKSUM_CHECK_FAILED);
+            }
         }
 
     };

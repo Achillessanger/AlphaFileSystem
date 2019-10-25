@@ -7,6 +7,15 @@ public class BufferBlk {
     private boolean isDelay = false; ///////////这个值还是要的
     private BufferBlk preFreeBufBlk;
     private BufferBlk nextFreeBufBlk;
+    private StringId bufBlkManager;
+
+    public StringId getBufBlkManager() {
+        return bufBlkManager;
+    }
+
+    public void setBufBlkManager(StringId bufBlkManager) {
+        this.bufBlkManager = bufBlkManager;
+    }
 
     public byte[] getData() {
         return data;

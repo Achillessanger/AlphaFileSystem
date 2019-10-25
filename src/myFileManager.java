@@ -86,6 +86,7 @@ public class myFileManager implements FileManager {
                     sb.append("size:0\n");
                     sb.append("block size:"+BLOCK_SIZE+'\n');
                     sb.append("logic block:\n");
+                    sb.append("0:\n");
                     out.write(sb.toString().getBytes("utf-8"));
                     out.close();
                 }catch (IOException e){
