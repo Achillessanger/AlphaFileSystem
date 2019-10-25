@@ -10,6 +10,9 @@ public class myBlockManager implements BlockManager {
     public String getPath() {
         return path;
     }
+    public myBlockManager(String path){
+        this.path = path;
+    }
 
     public Block getBlock(Id indexId){
         if(indexId instanceof StringId) {
@@ -28,60 +31,114 @@ public class myBlockManager implements BlockManager {
         return null;
     };
     public Block newBlock(byte[] b){
-        String idPath = path + "id.count";
+        String idPath = path + "../id.count";
         java.io.File file = new java.io.File(idPath);
         if(!file.exists()){
             throw new ErrorCode(ErrorCode.INITFILE_ERROR);
         }
-        try{
+        try {
             BufferedReader br = new BufferedReader(new FileReader(file));
-            String tmp = null;
+            String tmp;
             tmp = br.readLine();
             long newIndex = Long.parseLong(tmp);
             String dataPath = path + newIndex + ".data";
             String metaPath = path + newIndex + ".meta";
-            java.io.File dataFile = new java.io.File(dataPath);
-            java.io.File metaFile = new java.io.File(metaPath);
-            if(dataFile.exists() || metaFile.exists()){
-                throw new ErrorCode(ErrorCode.INITFILE_ERROR);
+
+
+            int bufIndex = (int) newIndex % (Buffer.BUFFER_LINES);
+            BufferBlk newBlk = Buffer.findFreeBlk();
+            if (newBlk == null) {
+                //空闲缓冲区已空？？？？？？？？？？？？？？？？？？？？？？？暂时认为不可能
+                throw new ErrorCode(ErrorCode.OPEN_TOO_MANY_FILES);
+
+            } else {
+                Buffer.deleteFromCache(newBlk);
+                Buffer.makeBusy(newBlk, bufIndex); ///////////////////////
+                newBlk.setData(b);
+                StringId sid = new StringId(newIndex + "");
+                newBlk.setBufBlkId(sid);
+
+//                FileOutputStream fos_data = new FileOutputStream(dataPath);
+//                fos_data.write(b);
+//                fos_data.close();
+
+                FileOutputStream os_data = new FileOutputStream(dataPath,false);
+                BufferedInputStream is_data = new BufferedInputStream(new ByteArrayInputStream(b));
+                os_data.write(b);
+                os_data.flush();
+                is_data.close();
+                os_data.close();
+
+                FileOutputStream out_meta = new FileOutputStream(metaPath,false);
+                StringBuffer sb_meta = new StringBuffer();
+                sb_meta.append("size:"+b.length+"\n");
+                String md5 = MD5Util.getMD5String(b);
+                sb_meta.append("checksum:"+md5+"\n");
+                out_meta.write(sb_meta.toString().getBytes("utf-8"));
+
+                Buffer.makeFree(newBlk);///////////////////////
+
+
+
+                newIndex++;
+
+                FileOutputStream out = new FileOutputStream(file, false);
+                StringBuffer sb = new StringBuffer();
+                sb.append(newIndex);
+                out.write(sb.toString().getBytes("utf-8"));
+                out.close();
+
+                return new myBlock(sid, this, dataPath, metaPath);
             }
-            Block newBlock = new myBlock(new StringId(tmp),this,dataPath,metaPath);
-            newIndex++;
-            FileOutputStream out = new FileOutputStream(file,false);
-            StringBuffer sb = new StringBuffer();
-            sb.append(newIndex);
-            out.write(sb.toString().getBytes("utf-8"));
-            out.close();
-            sb.delete(0,sb.length());
-
-
-            dataFile.createNewFile();
-            metaFile.createNewFile();
-
-
-            FileOutputStream os_data = new FileOutputStream(dataFile,false);
-            BufferedInputStream is_data = new BufferedInputStream(new ByteArrayInputStream(b));
-            os_data.write(b);
-            os_data.flush();
-            is_data.close();
-            os_data.close();
-
-
-            FileOutputStream out_meta = new FileOutputStream(metaFile,false);
-            sb.append("size:"+b.length+"\n");
-            String md5 = MD5Util.getMD5String(b);
-            sb.append("checksum:"+md5+"\n");
-            out_meta.write(sb.toString().getBytes("utf-8"));
-
-        }catch (IOException e){
+        } catch (IOException e){
             throw new ErrorCode(ErrorCode.IO_EXCEPTION);
-        }catch (ErrorCode errorCode){
-            throw errorCode;
         }
-
-        return null;
-    };
-    public myBlockManager(String path){
-        this.path = path;
     }
+
+
+
+
+//
+//            java.io.File dataFile = new java.io.File(dataPath);
+//            java.io.File metaFile = new java.io.File(metaPath);
+//            if(dataFile.exists() || metaFile.exists()){
+//                throw new ErrorCode(ErrorCode.INITFILE_ERROR);
+//            }
+//            Block newBlock = new myBlock(new StringId(tmp),this,dataPath,metaPath);
+//            newIndex++;
+//            FileOutputStream out = new FileOutputStream(file,false);
+//            StringBuffer sb = new StringBuffer();
+//            sb.append(newIndex);
+//            out.write(sb.toString().getBytes("utf-8"));
+//            out.close();
+//            sb.delete(0,sb.length());
+//
+//
+//            dataFile.createNewFile();
+//            metaFile.createNewFile();
+//
+//
+//            FileOutputStream os_data = new FileOutputStream(dataFile,false);
+//            BufferedInputStream is_data = new BufferedInputStream(new ByteArrayInputStream(b));
+//            os_data.write(b);
+//            os_data.flush();
+//            is_data.close();
+//            os_data.close();
+//
+//
+//            FileOutputStream out_meta = new FileOutputStream(metaFile,false);
+//            sb.append("size:"+b.length+"\n");
+//            String md5 = MD5Util.getMD5String(b);
+//            sb.append("checksum:"+md5+"\n");
+//            out_meta.write(sb.toString().getBytes("utf-8"));
+//
+//        }catch (IOException e){
+//            throw new ErrorCode(ErrorCode.IO_EXCEPTION);
+//        }catch (ErrorCode errorCode){
+//            throw errorCode;
+//        }
+//
+//        return null;
+
+
 }

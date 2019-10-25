@@ -32,5 +32,9 @@ public class MD5Util {
         stringbuffer.append(c0);
         stringbuffer.append(c1);
     }
+    public static boolean checkPassword(byte[] password, String md5PwdStr) {
+        String s = getMD5String(password);
+        return s.equals(md5PwdStr);
+    }
 
 }

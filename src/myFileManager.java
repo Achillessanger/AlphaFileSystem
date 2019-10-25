@@ -9,16 +9,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Logger;
 
-public class MyFileManager implements FileManager {
+public class myFileManager implements FileManager {
     private String path;
     private final long BLOCK_SIZE = 512;
 
     public String getPath() {
         return path;
     }
-    public MyFileManager(String path){
+    public myFileManager(String path){
         this.path = path;
     }
 
@@ -34,7 +33,7 @@ public class MyFileManager implements FileManager {
             }else {
                 try {
                     BufferedReader br = new BufferedReader(new FileReader(file));
-                    String tmp = null;
+                    String tmp;
                     tmp = br.readLine();
                     long fileSize = Long.parseLong(tmp.split(":")[1]);
                     tmp = br.readLine();
@@ -43,10 +42,11 @@ public class MyFileManager implements FileManager {
                     tmp = br.readLine();
                     ArrayList<Map<Id,Id>> LogicBlockList = new ArrayList<>();
 
-                    while (tmp != null){
+                    while (tmp != null && !"".equals(tmp)){
+                        boolean debug = "".equals(tmp);
                         Map<Id,Id> map = new HashMap<>();
                         if(tmp.split(":").length == 1){
-                            map = null;
+                            map = mContext.fileEmpytMap;
                         }else {
                             tmp = tmp.split(":")[1];
 
@@ -59,7 +59,7 @@ public class MyFileManager implements FileManager {
                         LogicBlockList.add(map);
                         tmp = br.readLine();
                     }
-                    File myFile = new MyFile(fileId,this,fileSize,blockSize,LogicBlockList);
+                    File myFile = new myFile(fileId,this,fileSize,blockSize,LogicBlockList,filePath);
                     return myFile;
 
                 }catch (IOException e){
@@ -92,7 +92,7 @@ public class MyFileManager implements FileManager {
                     throw new ErrorCode(ErrorCode.IO_EXCEPTION);
                 }
             }
-            File myFile = new MyFile(fileId,this,0,BLOCK_SIZE,null);
+            File myFile = new myFile(fileId,this,0,BLOCK_SIZE,new ArrayList<>(),path+id+".meta");
             return myFile;
         }
         return null;
