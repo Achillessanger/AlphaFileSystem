@@ -6,7 +6,7 @@ public class Buffer {
     public static final int BUFFER_LINES = 4;
     public static final ArrayList<ArrayList<BufferBlk>> cache;
     public static final BufferBlk freeHead;
-    private static ArrayList<BufferBlk> delyBufBlks;
+    public static ArrayList<BufferBlk> delyBufBlks;
     static {
         freeHead = new BufferBlk();
         BufferBlk tmp = freeHead;
@@ -36,7 +36,8 @@ public class Buffer {
         }else if(tmpPre != null && tmpNext == null){
             tmpPre.setNextFreeBufBlk(null);
         }
-        cache.get(bufIndex).add(tmpBlk);
+        if(!cache.get(bufIndex).contains(tmpBlk))
+            cache.get(bufIndex).add(tmpBlk);
         tmpBlk.setBusy(true);
     }
     public static void makeFree(BufferBlk tmpBlk){
@@ -52,11 +53,17 @@ public class Buffer {
     public static void deleteFromCache(BufferBlk tmpBlk){
         int blkId = Integer.parseInt((tmpBlk.getBufBlkId()).getId());
         int oldBufIndex = blkId %(BUFFER_LINES);
+
         if(blkId != -1){
-            for(BufferBlk blk : cache.get(oldBufIndex)){
-                if(blk.getBufBlkId().getId().equals(blkId+""))
-                    cache.get(oldBufIndex).remove(blk);
+//            for(BufferBlk blk : cache.get(oldBufIndex)){
+//                if(blk.getBufBlkId().getId().equals(blkId+""))
+//                    cache.get(oldBufIndex).remove(blk);
+//            }
+            ArrayList<BufferBlk> tmp = new ArrayList<>();
+            for(BufferBlk tmpblk:cache.get(oldBufIndex)){
+                tmp.add(tmpblk);
             }
+            cache.get(oldBufIndex).remove(tmpBlk);
         }
     }
     public static BufferBlk findFreeBlk(){
@@ -77,16 +84,21 @@ public class Buffer {
 
     private static void delayWriteFin(BufferBlk blk){
         blk.setDelay(false);
-        for(BufferBlk bufferBlk : delyBufBlks){
-            if(bufferBlk.getBufBlkId().getId().equals(blk.getBufBlkId().getId()))
-                delyBufBlks.remove(bufferBlk);
-        }
+//        for(BufferBlk bufferBlk : delyBufBlks){
+//            if(bufferBlk.getBufBlkId().getId().equals(blk.getBufBlkId().getId()))
+//                delyBufBlks.remove(bufferBlk);
+//        }
+        delyBufBlks.remove(blk);
     }
     public static void delayWrite(){
+        ArrayList<BufferBlk> tmp = new ArrayList<>();
+        for(BufferBlk tmpblk:delyBufBlks){
+            tmp.add(tmpblk);
+        }
         if(delyBufBlks.size() == 0)
             return;
         try {
-            for(BufferBlk blk : delyBufBlks){
+            for(BufferBlk blk : tmp){
                 writeBlk2file(blk);
 
             }
@@ -96,7 +108,6 @@ public class Buffer {
 
     }
     public static void writeBlk2file(BufferBlk blk){
-        StringId debugid = blk.getBufBlkManager();
         String dataPath = mContext.myBlockManagerMap.get(blk.getBufBlkManager()).getPath() + blk.getBufBlkId().getId() + ".data";
         String metaPath = mContext.myBlockManagerMap.get(blk.getBufBlkManager()).getPath() + blk.getBufBlkId().getId() + ".meta";
         try {

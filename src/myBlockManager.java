@@ -64,7 +64,15 @@ public class myBlockManager implements BlockManager {
 
             int bufIndex = (int) newIndex % (Buffer.BUFFER_LINES);
             BufferBlk newBlk = Buffer.findFreeBlk();
+
+            //这里和正常写回不一样
+            if(Buffer.delyBufBlks.size() != 0 && newBlk == null){
+                Buffer.delayWrite();
+                newBlk = Buffer.findFreeBlk();
+            }
             if (newBlk == null) {
+                int debug = 0;
+
                 //空闲缓冲区已空？？？？？？？？？？？？？？？？？？？？？？？暂时认为不可能
                 throw new ErrorCode(ErrorCode.OPEN_TOO_MANY_FILES);
 

@@ -69,12 +69,14 @@ public class myFile implements File {
                 }
             }
 
-            bytes = chooseDuplication(LogicBlockList.get((int)indexEnd));
-            for(int j = 0; j < bytes.length & retBytesIndex < length; j++){
-                retBytes[retBytesIndex] = bytes[j];
-                retBytesIndex++;
-                if(retBytesIndex == length)
-                    break;
+            if(retBytesIndex != length){
+                bytes = chooseDuplication(LogicBlockList.get((int)indexEnd));
+                for(int j = 0; j < bytes.length & retBytesIndex < length; j++){
+                    retBytes[retBytesIndex] = bytes[j];
+                    retBytesIndex++;
+                    if(retBytesIndex == length)
+                        break;
+                }
             }
 
             cursor += length;
@@ -84,9 +86,18 @@ public class myFile implements File {
         }
     };
     public void write(byte[] b){
-        if(cursor < 0 || (cursor > fileSize && fileSize != 0) || (fileSize == 0 && cursor != 0))
+        if(cursor < 0)
             throw new ErrorCode(ErrorCode.CURSOR_ERROR);
-
+        if(cursor > fileSize && fileSize != 0){
+            byte[] n = new byte[(int)(cursor - fileSize)+b.length];
+            for(int i = 0; i < cursor-fileSize; i++){
+                n[i] = 0x00;
+            }
+            for(int i = 0; i < b.length; i++){
+                n[i] = b[i];
+            }
+            b = n;
+        }
         int indexBegin = (int)(cursor/blockSize);
         int indexEnd = (int)((cursor+b.length)/blockSize);
         int writeIndex = 0;
@@ -126,7 +137,8 @@ public class myFile implements File {
                 newBytes[j] = b[writeIndex];
                 writeIndex++;
             }
-            LogicBlockList.add(writeDuplication(newBytes));
+            if(newBytes.length != 0)
+                LogicBlockList.add(writeDuplication(newBytes));
         }else {
             newBytes = new byte[(int)(cursor%blockSize) + b.length];
             int i = 0;
@@ -137,7 +149,8 @@ public class myFile implements File {
                 newBytes[i] = b[writeIndex];
                 writeIndex++;
             }
-            LogicBlockList.add(writeDuplication(newBytes));
+            if(newBytes.length != 0)
+                LogicBlockList.add(writeDuplication(newBytes));
         }
 
 
@@ -173,7 +186,7 @@ public class myFile implements File {
         for(Block block:usingBlocks){
             int blkId = Integer.parseInt(((StringId) block.getIndexId()).getId());
             BufferBlk bufferBlk = Buffer.findBufBlk(blkId);
-            if(bufferBlk.isDelay()){
+            if(bufferBlk != null && bufferBlk.isDelay()){
                 //写回
                 Buffer.writeBlk2file(bufferBlk);
                 bufferBlk.setDelay(false);
@@ -210,18 +223,18 @@ public class myFile implements File {
                 newBlock[index] = oldBlockEnd[i];
                 index++;
             }
-            int debug = 0;
+
             for(;index < blockSize; index++){
                 newBlock[index] = 0x00;
                 if(index == newBlock.length - 1)
                     break;
             }
-            int debug2 = 0;
+
             LogicBlockList.add(writeDuplication(newBlock));
             for(int i = oldBlockEndIndex+1; i < newBlockEndIndex; i++){
                 LogicBlockList.add(writeDuplication(new byte[(int)blockSize]));
             }
-            int debug3 = 0;
+
             if(oldBlockEndIndex != newBlockEndIndex)
                 LogicBlockList.add(writeDuplication(new byte[(int)(newSize%blockSize)]));
 
