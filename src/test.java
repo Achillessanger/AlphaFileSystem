@@ -3,7 +3,7 @@ import java.util.Scanner;
 public class test {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        System.out.println("supported commands:cat,hex,write,copy,create,setsize,q:");
+        System.out.println("supported commands:cat,hex,write,copy,create,setsize,c,q:");
         while (true){
             System.out.println("$");
             String command = scanner.nextLine();
@@ -11,12 +11,16 @@ public class test {
             String[] commandArr;
             try{
                 switch (op){
+                    case "c":
+                        alphaUtil.alphaClose();
+                        break;
                     case "cat":
                         commandArr = command.split(" ",3);
                         if(commandArr.length == 3 && isFm(commandArr[1]))
                             alphaUtil.alphaCat(commandArr[1],commandArr[2]);
                         else
                             throw new ErrorCode(ErrorCode.COMMAND_PARAMETER_ERROE);
+                        
                         break;
                     case "hex":
                         commandArr = command.split(" ",3);

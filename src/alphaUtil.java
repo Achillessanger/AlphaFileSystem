@@ -3,6 +3,10 @@ import interfaces.BlockManager;
 import interfaces.File;
 import interfaces.FileManager;
 
+import java.io.BufferedReader;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 
 public class alphaUtil {
@@ -62,16 +66,34 @@ public class alphaUtil {
     public static void alphaCopy(String fmNameOld, String fileNameOld, String fmNameNew, String fileNameNew){
         try{
             FileManager fmOld = mContext.myFileManagerMap.get(new StringId(fmNameOld));
-            File fileOld = fmOld.getFile(new StringId(fileNameOld));
+//            File fileOld = fmOld.getFile(new StringId(fileNameOld));
             FileManager fmNew = mContext.myFileManagerMap.get(new StringId(fmNameNew));
-            File fileNew = fmNew.newFile(new StringId(fileNameNew));
+//            File fileNew = fmNew.newFile(new StringId(fileNameNew));
 
-            openedFile.add(fileNew);
+            java.io.File oldFile = new java.io.File(((myFileManager) fmOld).getPath()+fileNameOld+".meta");
+            java.io.File newFile = new java.io.File(((myFileManager) fmNew).getPath()+fileNameNew+".meta");
 
-            fileNew.write(fileOld.read((int)fileOld.size()));
+            if(newFile.exists())
+                throw new ErrorCode(ErrorCode.NO_SUCH_FILE);
+            newFile.createNewFile();
+            FileOutputStream out = new FileOutputStream(newFile,true);
+            StringBuffer sb = new StringBuffer();
+            BufferedReader br = new BufferedReader(new FileReader(oldFile));
+            String tmp;
+            tmp = br.readLine();
+            while (tmp != null){
+                sb.append(tmp+"\n");
+                tmp = br.readLine();
+            }
+            out.write(sb.toString().getBytes("utf-8"));
+            out.close();
+
+//            fileNew.write(fileOld.read((int)fileOld.size()));
         }catch (ErrorCode errorCode){
 //            System.out.println(errorCode.getErrorText(errorCode.getErrorCode()));
             throw errorCode;
+        }catch (IOException e){
+            throw new ErrorCode(ErrorCode.IO_EXCEPTION);
         }
     }
 
@@ -106,6 +128,17 @@ public class alphaUtil {
             throw errorCode;
         }
 
+    }
+    public static void alphaClose(){
+        try {
+            if(operatingFile == null)
+                throw new ErrorCode(ErrorCode.NO_OPERATING_FILE);
+            operatingFile.close();
+            if(openedFile.contains(operatingFile))
+                openedFile.remove(operatingFile);
+        }catch (ErrorCode errorCode){
+            throw errorCode;
+        }
     }
 
 

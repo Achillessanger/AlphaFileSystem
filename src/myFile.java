@@ -262,7 +262,7 @@ public class myFile implements File {
         if(map == null){
             blockData = new byte[(int)blockSize];
         }else {
-            for(Map.Entry<Id,Id> entry : map.entrySet()){
+           Loop: for(Map.Entry<Id,Id> entry : map.entrySet()){
                 if((entry.getKey()).equals(new StringId("FILE_EMPTY"))){ //处理文件空洞,newEmpytBlock不应该用在bm里因为文件空洞的时候是不存在block里的
                     blockData = new byte[(int)blockSize];
                     break;
@@ -274,7 +274,10 @@ public class myFile implements File {
 //                        usingBlocks.add(entry.getValue());
                         break;
                     }catch (ErrorCode errorCode){
-                        throw errorCode;
+                        if(errorCode.getErrorCode() == ErrorCode.CHECKSUM_CHECK_FAILED)
+                            continue Loop;
+                        else
+                            throw errorCode;
                     }
                 }
             }
